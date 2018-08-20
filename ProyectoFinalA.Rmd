@@ -1,5 +1,5 @@
 ---
-title: "Proyecto Final"
+title: "Trabajo Final Master"
 author: "Raul Amarelle"
 date: "7 de agosto de 2018"
 output: html_document
@@ -94,7 +94,7 @@ summary(df.data)
 ##########################
 
 ```{r}
-# Vamos a crear nuevas columnas para dia, mes y año, nos pueden ser de utilidad para segmentar las predicciones segun periodo. Vamos a procesar las fechas porque estan como cadena de caracteres.
+# Vamos a crear nuevas columnas para dia, mes y aÃ±o, nos pueden ser de utilidad para segmentar las predicciones segun periodo. Vamos a procesar las fechas porque estan como cadena de caracteres.
 
 df.data$DAY <- 'NULO'
 df.data$MONTH <- 'NULO'
@@ -125,7 +125,7 @@ View(df.data)
 ```
 
 ```{r}
-## Puede ser interesante añadir crear una columna categorica entre semana (ES) y fin de semana (FS), porque los fines de semana hay previsiblemente mas asistencia
+## Puede ser interesante aÃ±adir crear una columna categorica entre semana (ES) y fin de semana (FS), porque los fines de semana hay previsiblemente mas asistencia
 
 # Primero creamos la variable WeekDay como ('L', 'M', 'X', 'J', 'V', 'S', 'D') segun corresponda
 df.data$WEEKDAY <- 'NULO'
@@ -183,7 +183,7 @@ View(df.data)
 ###  DISTRIBUCION VARIABLES  ###
 ################################
 
-## VAMOS A CONGELAR ESTA PARTE, HASTA QUE TENGAMOS UN POCO MÁS CLARO QUE BUSCAR
+## VAMOS A CONGELAR ESTA PARTE, HASTA QUE TENGAMOS UN POCO MAS CLARO QUE BUSCAR
 Parece razonable observar: 
 La distribucion de las variables (las escalamos para observar mejor de forma conjunta la distribucion de todas)
 Ya que estamos trabajando con una serie temporal, ver la evolucion que toman las variables
@@ -214,7 +214,7 @@ ggplot(data = df.data) +
 ```
 
 ```{r}
-# Muy complicado apreciar nada. Parece razonable pensar que dentro de un mismo año la serie sigue mas o menos la misma distribucion. Vemos la distribución de la serie para 2017
+# Muy complicado apreciar nada. Parece razonable pensar que dentro de un mismo aÃ±o la serie sigue mas o menos la misma distribucion. Vemos la distribuciÃ³n de la serie para 2017
 SerieTemporal2 <- seq(1,364)
 
 ggplot(data = df.data[df.data$YEAR == '2017',]) +
@@ -242,7 +242,7 @@ ggplot(data = df.data, aes(x = CLIMATIZACION)) + geom_bar(aes(fill = CLIMATIZACI
 
 
 ```{r}
-# AFLUENCIA agrupada por día de la semanas
+# AFLUENCIA agrupada por dÃ­a de la semanas
 # suma
 aggregate(formula = AFLUENCIA ~ WEEKDAY, data = df.data, FUN = sum)
 # media
@@ -278,7 +278,7 @@ correlation
 Causal Impact using Bayesian Structural Time-Series Models
 
 ```{r}
-# Reflejamos la evolución error, conviertiendo la variable en una serie temporal
+# Reflejamos la evoluciÃ³n error, conviertiendo la variable en una serie temporal
 ST_Error=ts(df.data$ERROR,freq=1)
 plot(ST_Error,xlab="Jornada",ylab="% Error")
 
