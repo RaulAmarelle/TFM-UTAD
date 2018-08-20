@@ -44,7 +44,7 @@ View(df.data)
 ```
 
 ```{r}
-# Función para normalizar datos. El minimo a 0, el maximo a 1
+# Funcion para normalizar datos. El minimo a 0, el maximo a 1
 
 normalize <- function(x){
   x <- (x - min(x))/(max(x)-min(x))
@@ -54,34 +54,34 @@ normalize <- function(x){
 
 
 ############################
-###  ANÁLISIS VARIABLES  ###
+###  ANALISIS VARIABLES  ###
 ############################
 
-Este dataset es una recopilación de datos diarios de temperatura y potencia consumida relativos a un centro comercial.
+Este dataset es una recopilacion de datos diarios de temperatura y potencia consumida relativos a un centro comercial.
 
-Breve explicación de las variables:
-1. Fecha: fecha de la medición, hay una medición diaria
+Breve explicacion de las variables:
+1. Fecha: fecha de la medicion, hay una medicion diaria
 2. Estimado: no sirve de nada
 3. Kwh: potencia consumida
-4. LB: Línea base, es decir, la predicción de potencia consumida
-5 a 10. CCD ó CCHD: Cooling-Degree Day o Cooling Heating Degree Day son temperaturas recogidas en 6 columnas. Es la diferencia entre el promedio diario de temperatura y una determinada temperatura base de referencia (suele ser la exterior). El centro comercial tiene dos modos de climatización: calentar o enfriar, por eso son siempre 3 ceros vs 3 números. 18, 19 y 20 es la temperatura base en ambos casos. Por eso el valor es siempre el mismo sumando o restando 1 de una columna a la siguiente.
-11. Afluencia: Número de personas visitantes.
+4. LB: Linea base, es decir, la prediccion de potencia consumida
+5 a 10. CCD o CCHD: Cooling-Degree Day o Cooling Heating Degree Day son temperaturas recogidas en 6 columnas. Es la diferencia entre el promedio diario de temperatura y una determinada temperatura base de referencia (suele ser la exterior). El centro comercial tiene dos modos de climatizacion: calentar o enfriar, por eso son siempre 3 ceros vs 3 numeros. 18, 19 y 20 es la temperatura base en ambos casos. Por eso el valor es siempre el mismo sumando o restando 1 de una columna a la siguiente.
+11. Afluencia: Numero de personas visitantes.
 
 
-Quiere decir que de las 3+3 columnas de temperatura, 2+2 son redundantes. Con quedarnos una columna de cada modo de climatización, es suficiente. Escogemos CCDD20 y CHDD18.
+Quiere decir que de las 3+3 columnas de temperatura, 2+2 son redundantes. Con quedarnos una columna de cada modo de climatizacion, es suficiente. Escogemos CCDD20 y CHDD18.
 
 
 ```{r}
-# TRATAMIENTO DE DATOS Y PREANÁLISIS DEL DATASET
+# TRATAMIENTO DE DATOS Y PREANALISIS DEL DATASET
 
-# Tenemos que tratar el dataset, podemos simplificarlo eliminando algunas columnas. La columna 2 se puede elimintar, no aporta nada. De las 3+3 columnas de temperatura, 2+2 son redundantes. Con quedarnos una columna de cada modo de climatización, es suficiente. Escogemos CCDD20 y CHDD18, que son las críticas
+# Tenemos que tratar el dataset, podemos simplificarlo eliminando algunas columnas. La columna 2 se puede elimintar, no aporta nada. De las 3+3 columnas de temperatura, 2+2 son redundantes. Con quedarnos una columna de cada modo de climatizacion, es suficiente. Escogemos CCDD20 y CHDD18, que son las criticas
 
 df.data <- df.data[,-c(2, 5, 6, 9, 10)]
 View(df.data)
 ```
 
 ```{r}
-# Vamos a hacer un preanálisis de variables
+# Vamos a hacer un preanalisis de variables
 
 dim(df.data)
 str(df.data)
@@ -94,7 +94,7 @@ summary(df.data)
 ##########################
 
 ```{r}
-# Vamos a crear nuevas columnas para dia, mes y año, nos pueden ser de utilidad para segmentar las predicciones según periodo. Vamos a procesar las fechas porque están como cadena de caracteres.
+# Vamos a crear nuevas columnas para dia, mes y año, nos pueden ser de utilidad para segmentar las predicciones segun periodo. Vamos a procesar las fechas porque estan como cadena de caracteres.
 
 df.data$DAY <- 'NULO'
 df.data$MONTH <- 'NULO'
@@ -113,7 +113,7 @@ View(df.data)
 
 
 ```{r}
-# Las nuevas columnas creadas son caracteres. Transformamos valores a numéricos. También transformamos la columna fecha de caracteres a clase Date.
+# Las nuevas columnas creadas son caracteres. Transformamos valores a numericos. Tambien transformamos la columna fecha de caracteres a clase Date.
 
 df.data$FECHA <- as.Date(df.data$FECHA, format="%d/%m/%Y")
 df.data$YEAR <- as.numeric(as.character(df.data$YEAR))
@@ -125,23 +125,23 @@ View(df.data)
 ```
 
 ```{r}
-## Puede ser interesante añadir crear una columna categórica entre semana (ES) y fin de semana (FS), porque los fines de semana hay previsiblemente más asistencia
+## Puede ser interesante añadir crear una columna categorica entre semana (ES) y fin de semana (FS), porque los fines de semana hay previsiblemente mas asistencia
 
-# Primero creamos la variable WeekDay como ('L', 'M', 'X', 'J', 'V', 'S', 'D') según corresponda
+# Primero creamos la variable WeekDay como ('L', 'M', 'X', 'J', 'V', 'S', 'D') segun corresponda
 df.data$WEEKDAY <- 'NULO'
 
 seq1 <- c('M', 'X', 'J', 'V', 'S', 'D', 'L')
 df.data$WEEKDAY[1:728] <- seq1
 df.data$WEEKDAY[729] <- 'M'
 
-# Creamos la variable categórica entre semana (ES) y fin de semana (FS)
+# Creamos la variable categorica entre semana (ES) y fin de semana (FS)
 df.data$FINDE <- ifelse(df.data$WEEKDAY %in% c('S', 'D'), 'FS', 'ES')
 
 View(df.data)
 ```
 
 ```{r}
-# Creamos la variable categórica Climatización, que tomará 3 valores:
+# Creamos la variable categorica Climatizacion, que tomara 3 valores:
 #   - Heating
 #   - Cooling
 #   - Neutro
@@ -153,7 +153,7 @@ View(df.data)
 
 
 ```{r}
-# Creamos una nueva columna, que la llamaremos ERROR, que será el % de error de la potencia consumida vs previsión de potencia
+# Creamos una nueva columna, que la llamaremos ERROR, que sera el % de error de la potencia consumida vs prevision de potencia
 df.data$ERROR <- (df.data$KWH-df.data$LB)/df.data$KWH * 100
 
 View(df.data)
@@ -169,10 +169,10 @@ View(df.data)
 nas <- nrow(data[data$CHDD18!=0 & data$CCDD20!=0,])
 nas
 
-# Sólo hay 4 muestras N/A, aprox el 0.5% de los datos
+# Solo hay 4 muestras N/A, aprox el 0.5% de los datos
 nas / nrow(df.data) *100
 
-# Considero que puedo eliminar esas filas porque, aparte de ser un número muy bajo y poco representativo, no se puede saber si ese día el sistema funcionó bajo régimen de calefacción o refrigeración, por lo que no podré extraer conclusiones
+# Considero que puedo eliminar esas filas porque, aparte de ser un numero muy bajo y poco representativo, no se puede saber si ese dia el sistema funciono bajo regimen de calefaccion o refrigeracion, por lo que no podre extraer conclusiones
 df.data <- df.data[!is.na(df.data$CCDD20),]
 
 View(df.data)
@@ -180,16 +180,16 @@ View(df.data)
 
 
 ################################
-###  DISTRIBUCIÓN VARIABLES  ###
+###  DISTRIBUCION VARIABLES  ###
 ################################
 
-## VAMOS A CONGELAR ESTA PARTE, HASTA QUE TENGAMOS UN POCO MÁS CLARO QUÉ BUSCAR
+## VAMOS A CONGELAR ESTA PARTE, HASTA QUE TENGAMOS UN POCO MÁS CLARO QUE BUSCAR
 Parece razonable observar: 
-La distribución de las variables (las escalamos para observar mejor de forma conjunta la distribución de todas)
-Ya que estamos trabajando con una serie temporal, ver la evolución que toman las variables
+La distribucion de las variables (las escalamos para observar mejor de forma conjunta la distribucion de todas)
+Ya que estamos trabajando con una serie temporal, ver la evolucion que toman las variables
 
 ```{r}
-# Distribución con funciones de densidad
+# Distribucion con funciones de densidad
 ggplot() +
   geom_density(data = df.data, aes(x = scale(KWH), colour = 'kWh')) +
   geom_density(data = df.data, aes(x = scale(LB), colour = 'LB')) +
@@ -214,7 +214,7 @@ ggplot(data = df.data) +
 ```
 
 ```{r}
-# Muy complicado apreciar nada. Parece razonable pensar que dentro de un mismo año la serie sigue más o menos la misma distribución. Vemos la distribución de la serie para 2017
+# Muy complicado apreciar nada. Parece razonable pensar que dentro de un mismo año la serie sigue mas o menos la misma distribucion. Vemos la distribución de la serie para 2017
 SerieTemporal2 <- seq(1,364)
 
 ggplot(data = df.data[df.data$YEAR == '2017',]) +
@@ -228,7 +228,7 @@ ggplot(data = df.data[df.data$YEAR == '2017',]) +
 
 
 ```{r}
-# Vamos a comparar solo la serie temporal de KWH (real) y LB(predicción)
+# Vamos a comparar solo la serie temporal de KWH (real) y LB(prediccion)
 ggplot(data = df.data) + 
   geom_line(aes(x = SerieTemporal, y = KWH, color = 'KWH')) +
   geom_line(aes(x = SerieTemporal, y = LB, color = 'LB')) + 
@@ -272,7 +272,7 @@ correlation
 
 
 ################################
-###  ANÁLISIS CAUSAL IMPACT  ###
+###  ANALISIS CAUSAL IMPACT  ###
 ################################
 
 Causal Impact using Bayesian Structural Time-Series Models
@@ -284,9 +284,9 @@ plot(ST_Error,xlab="Jornada",ylab="% Error")
 
 ```
 
-Como primera aproximación, podemos observar que el modelo de predicción ha mejorado a partir de la muestra 450 aprox, ya que el % Error es mucho menor, tiende a concentrarse en la horquilla de -10% a +10%.
+Como primera aproximacion, podemos observar que el modelo de prediccion ha mejorado a partir de la muestra 450 aprox, ya que el % Error es mucho menor, tiende a concentrarse en la horquilla de -10% a +10%.
 
-Vamos a suponer que a partir de la medición 458, coincidiendo con el 01/06/2017, se han introducido mejoras en el algoritmo de predicción.
+Vamos a suponer que a partir de la medicion 458, coincidiendo con el 01/06/2017, se han introducido mejoras en el algoritmo de prediccion.
 
 ```{r}
 # Vamos a crear variable de datos, para no tener problemas luego con la clase
@@ -297,7 +297,7 @@ head(ST_data)
 
 
 ```{r}
-# Para estimar un efecto causal, comenzamos por segmentar dos periodos, uno previo a la intervención para capacitar el modelo y el segundo periodo, posterior a la intervención para estimar el cambio.
+# Para estimar un efecto causal, comenzamos por segmentar dos periodos, uno previo a la intervencion para capacitar el modelo y el segundo periodo, posterior a la intervencion para estimar el cambio.
 
 pre.period <- c(df.data$FECHA[1], df.data$FECHA[456])
 post.period <- c(df.data$FECHA[457], df.data$FECHA[725])
@@ -327,7 +327,7 @@ summary(impact, "report")
 Using regression trees for forecasting
 
 ```{r}
-# Realizamos la división de los datos en dos conjuntos, train y test, siguiendo muestreo aleatorio (80% train, 20% test)
+# Realizamos la division de los datos en dos conjuntos, train y test, siguiendo muestreo aleatorio (80% train, 20% test)
 set.seed(1)
 ids <- sample(1:nrow(df.data), round(nrow(df.data)*.8))
 data.train <- df.data[ids, ]  #80%
@@ -354,7 +354,7 @@ theme_ts <- theme(panel.border = element_rect(fill = NA,
 ```
 
 ```{r}
-# La línea LB es la predicción de consumo
+# La linea LB es la prediccion de consumo
 g <- ggplot(df.data, aes(x=FECHA, y=KWH)) +  geom_line() + 
   geom_line(aes(x=FECHA, y=LB), linetype = 5, color = "red") + geom_smooth(method="lm")
 plot(g)
@@ -362,7 +362,7 @@ plot(g)
 ```
 
 ```{r}
-# Para ver un periodo más en detalle, podemos segmentar los datos
+# Para ver un periodo mas en detalle, podemos segmentar los datos
 # Ej: del 01/07/2016 al 30/09/2016
 
 dia1=as.Date("2016/07/01",format="%Y/%m/%d")
