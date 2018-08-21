@@ -362,6 +362,7 @@ plot(g)
 
 Se aprecia que hay una progresiva tendencia de disminución del consumo a lo largo de estos dos años, las medidas de ahorro energético están funcionando
 
+
 ```{r}
 # Para ver un periodo mas en detalle, podemos segmentar los datos
 # Ej: del 01/07/2016 al 30/09/2016
@@ -392,7 +393,7 @@ View(All.data.period)
 ```
 
 ```{r}
-# Igual que la serie entera, pero para hacer el plot de un periodo determinado
+# La idea es poner All.data.period como nuevos datos de un periodo determinado
 
 g <- ggplot(All.data.period, aes(x=FECHA, y=KWH)) +  geom_line() + 
   geom_line(aes(x=FECHA, y=LB), linetype = 5, color = "red") + geom_smooth(method="lm")
@@ -404,8 +405,8 @@ plot(g)
 
 ```{r}
 # En primer lugar, calculamos la serie temporal del consumo semanal
-period <- 1  # una medición diaria
-data_ts <- ts(df.data$KWH, freq = period * 7)
+period <- 1  # una medicion diaria
+data_ts <- ts(df.data$KWH, freq = period * 7)  # medición semanal
 plot(data_ts, xlab="Semanal",ylab="KWH")
 ```
 
