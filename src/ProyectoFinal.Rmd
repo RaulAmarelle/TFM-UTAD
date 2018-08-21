@@ -1,7 +1,7 @@
 ---
 title: "Trabajo Final Master"
 author: "Raul Amarelle"
-date: "7 de agosto de 2018"
+date: "21 de agosto de 2018"
 output: html_document
 ---
 
@@ -75,7 +75,7 @@ Quiere decir que de las 3+3 columnas de temperatura, 2+2 son redundantes. Con qu
 ```{r}
 # TRATAMIENTO DE DATOS Y PREANALISIS DEL DATASET
 
-# Tenemos que tratar el dataset, podemos simplificarlo eliminando algunas columnas. La columna 2 se puede elimintar, no aporta nada. De las 3+3 columnas de temperatura, 2+2 son redundantes. Con quedarnos una columna de cada modo de climatizacion, es suficiente. Escogemos CCDD20 y CHDD18, que son las criticas
+# Tenemos que tratar el dataset, podemos simplificarlo eliminando algunas columnas. La columna 2 se puede eliminar, no aporta nada. De las 3+3 columnas de temperatura, 2+2 son redundantes. Con quedarnos una columna de cada modo de climatizacion, es suficiente. Escogemos CCDD20 y CHDD18, que son las criticas
 
 df.data <- df.data[,-c(2, 5, 6, 9, 10)]
 View(df.data)
@@ -95,7 +95,7 @@ summary(df.data)
 ##########################
 
 ```{r}
-# Vamos a crear nuevas columnas para dia, mes y año, nos pueden ser de utilidad para segmentar las predicciones segun periodo. Vamos a procesar las fechas porque estan como cadena de caracteres.
+# Vamos a crear nuevas columnas para dia, mes y anio, nos pueden ser de utilidad para segmentar las predicciones segun periodo. Vamos a procesar las fechas porque estan como cadena de caracteres.
 
 df.data$DAY <- 'NULO'
 df.data$MONTH <- 'NULO'
@@ -146,6 +146,7 @@ View(df.data)
 #   - Heating
 #   - Cooling
 #   - Neutro
+
 df.data$CLIMATIZACION <- ifelse(df.data$CCDD20 > 0, 'Cooling',
                                          ifelse(df.data$CHDD18 > 0, 'Heating', 'Neutro'))
 
@@ -215,7 +216,7 @@ ggplot(data = df.data) +
 ```
 
 ```{r}
-# Muy complicado apreciar nada. Parece razonable pensar que dentro de un mismo año la serie sigue mas o menos la misma distribucion. Vemos la distribución de la serie para 2017
+# Muy complicado apreciar nada. Parece razonable pensar que dentro de un mismo anio la serie sigue mas o menos la misma distribucion. Vemos la distribucion de la serie para 2017
 SerieTemporal2 <- seq(1,364)
 
 ggplot(data = df.data[df.data$YEAR == '2017',]) +
@@ -243,7 +244,7 @@ ggplot(data = df.data, aes(x = CLIMATIZACION)) + geom_bar(aes(fill = CLIMATIZACI
 
 
 ```{r}
-# AFLUENCIA agrupada por día de la semanas
+# AFLUENCIA agrupada por dia de la semana
 # suma
 aggregate(formula = AFLUENCIA ~ WEEKDAY, data = df.data, FUN = sum)
 # media
