@@ -23,6 +23,7 @@ library(dplyr)
 library(stats)
 library(lubridate)
 library(CausalImpact)
+library(data.table)
 library(bsts)
 library(zoo)
 library(rpart) # decision tree method
@@ -125,7 +126,7 @@ View(df.data)
 ```
 
 ```{r}
-## Puede ser interesante a√±adir crear una columna categorica entre semana (ES) y fin de semana (FS), porque los fines de semana hay previsiblemente mas asistencia
+## Puede ser interesante crear una columna categorica Entre semana (ES) y Fin de semana (FS), porque los fines de semana hay previsiblemente mas asistencia
 
 # Primero creamos la variable WeekDay como ('L', 'M', 'X', 'J', 'V', 'S', 'D') segun corresponda
 df.data$WEEKDAY <- 'NULO'
@@ -278,7 +279,7 @@ correlation
 Causal Impact using Bayesian Structural Time-Series Models
 
 ```{r}
-# Reflejamos la evoluci√≥n error, conviertiendo la variable en una serie temporal
+# Reflejamos la evolucion del error, conviertiendo la variable en una serie temporal
 ST_Error=ts(df.data$ERROR,freq=1)
 plot(ST_Error,xlab="Jornada",ylab="% Error")
 
@@ -301,9 +302,6 @@ head(ST_data)
 
 pre.period <- c(df.data$FECHA[1], df.data$FECHA[456])
 post.period <- c(df.data$FECHA[457], df.data$FECHA[725])
-#post.period <- c("2017-06-01", "2018-02-27")
-head(pre.period)
-
 ```
 
 ```{r}
@@ -336,6 +334,7 @@ nrow(data.test)
 ```
 
 ```{r}
+# Propuesta de tema para las graficas
 theme_ts <- theme(panel.border = element_rect(fill = NA, 
                                               colour = "grey10"),
                   panel.background = element_blank(),
@@ -361,6 +360,8 @@ plot(g)
 
 ```
 
+Se aprecia que hay una progresiva tendencia de disminuciÛn del consumo a lo largo de estos dos aÒos, las medidas de ahorro energÈtico est·n funcionando
+
 ```{r}
 # Para ver un periodo mas en detalle, podemos segmentar los datos
 # Ej: del 01/07/2016 al 30/09/2016
@@ -373,7 +374,7 @@ data.period
 ```
 
 ```{r}
-# No funciona, lo dejo de momento
+# NO FUNCIONA, PERO NO AFECTA
 
 All.data.period <- df.data
 
@@ -391,12 +392,50 @@ View(All.data.period)
 ```
 
 ```{r}
+# Igual que la serie entera, pero para hacer el plot de un periodo determinado
+
 g <- ggplot(All.data.period, aes(x=FECHA, y=KWH)) +  geom_line() + 
   geom_line(aes(x=FECHA, y=LB), linetype = 5, color = "red") + geom_smooth(method="lm")
 plot(g)
 ```
 
 
+# Construyendo caracteristicas para modelar
+
+```{r}
+# En primer lugar, calculamos la serie temporal del consumo semanal
+period <- 1  # una mediciÛn diaria
+data_ts <- ts(df.data$KWH, freq = period * 7)
+plot(data_ts, xlab="Semanal",ylab="KWH")
+```
+
+```{r}
+decomp_ts <- stl(data_ts, s.window = "periodic", robust = TRUE)$time.series
+plot(decomp_ts)
+```
+
+```{r}
+trend_part <- ts(decomp_ts[,2])
+trend_fit <- auto.arima(trend_part)
+trend_for <- forecast(trend_fit, period)$mean
+```
+
+```{r}
+trend_data <- data.table(KWH = c(decomp_ts[,2], trend_for),
+                         Date = c(data.train$FECHA, data.test$FECHA),
+                         Type = c(rep("Real", nrow(data.train)), rep("Forecast",
+                                                                     nrow(data.test))))
+ 
+ggplot(trend_data, aes(Date, KWH, color = Type)) +
+  geom_line(size = 0.4) +
+  labs(title = paste(trend_fit)) +
+  theme_ts
+```
+
+```{r}
+
+```
+
 ```{r}
 
 ```
@@ -405,8 +444,8 @@ plot(g)
 
 ```
 
+```{r}
 
-
-
+```
 
 
