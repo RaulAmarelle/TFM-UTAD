@@ -406,7 +406,7 @@ plot(g)
 ```{r}
 # En primer lugar, calculamos la serie temporal del consumo semanal
 period <- 1  # una medicion diaria
-data_ts <- ts(df.data$KWH, freq = period * 7)  # medición semanal
+data_ts <- ts(df.data$KWH, freq = period * 7)  # medicion semanal
 plot(data_ts, xlab="Semanal",ylab="KWH")
 ```
 
