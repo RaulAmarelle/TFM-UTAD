@@ -366,7 +366,7 @@ plot(g)
 
 ```
 
-Se aprecia que hay una progresiva tendencia de disminucion del consumo a lo largo de estos dos años, las medidas de ahorro energetico estan funcionando
+Se aprecia que hay una progresiva tendencia de disminucion del consumo a lo largo de estos dos anios, las medidas de ahorro energetico estan funcionando
 
 
 ```{r}
