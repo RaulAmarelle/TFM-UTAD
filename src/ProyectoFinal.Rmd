@@ -286,8 +286,8 @@ origin <- as.Date("01/03/2016", format="%d/%m/%Y")
 ST_Error=ts(df.data$ERROR, start = origin, frequency = 1)
 plot(ST_Error, ylab="% Error")
 
-# OJO: Aunque ya es clase Date, la fecha la transforma en entero ??
-# Con as.Date sale lo mismo!
+# OJO: Aunque ya es clase Date, la fecha la transforma en entero 
+# Con as.Date sale lo mismo
 
 ```
 
@@ -450,11 +450,13 @@ plot(analisis.ts)
 ```
 
 ```{r}
+# Le quito los ultimos 5 meses para calcular luego la prediccion
 data.arima <- ts(df.data$KWH, frequency = 1, start = as.Date(c("01/03/2016"),format="%d/%m/%Y"), end = as.Date(c("30/09/2017"),format="%d/%m/%Y"))
 forecast::auto.arima(data.arima)
 ```
 
 ```{r}
+# Prediccion 5 meses, corresponde a h=149 medidas
 fcast <- forecast::forecast(forecast::auto.arima(data.arima), h=149)
 plot(fcast)
 ```
