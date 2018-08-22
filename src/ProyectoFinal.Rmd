@@ -281,8 +281,13 @@ Causal Impact using Bayesian Structural Time-Series Models
 
 ```{r}
 # Reflejamos la evolucion del error, conviertiendo la variable en una serie temporal
-ST_Error=ts(df.data$ERROR,freq=1)
-plot(ST_Error,xlab="Jornada",ylab="% Error")
+
+origin <- as.Date("01/03/2016", format="%d/%m/%Y")
+ST_Error=ts(df.data$ERROR, start = origin, frequency = 1)
+plot(ST_Error, ylab="% Error")
+
+# OJO: Aunque ya es clase Date, la fecha la transforma en entero ??
+# Con as.Date sale lo mismo!
 
 ```
 
@@ -434,16 +439,24 @@ ggplot(trend_data, aes(Date, KWH, color = Type)) +
   theme_ts
 ```
 
-```{r}
 
+#################################
+###  ANALISIS SERIE TEMPORAL  ###
+#################################
+
+```{r}
+analisis.ts = ts(df.data$KWH, frequency=1, start=df.data$FECHA[1])
+plot(analisis.ts)
 ```
 
 ```{r}
-
+data.arima <- ts(df.data$KWH, frequency = 1, start = as.Date(c("01/03/2016"),format="%d/%m/%Y"), end = as.Date(c("30/09/2017"),format="%d/%m/%Y"))
+forecast::auto.arima(data.arima)
 ```
 
 ```{r}
-
+fcast <- forecast::forecast(forecast::auto.arima(data.arima), h=149)
+plot(fcast)
 ```
 
 ```{r}
