@@ -286,7 +286,7 @@ origin <- as.Date("01/03/2016", format="%d/%m/%Y")
 ST_Error=ts(df.data$ERROR, start = origin, frequency = 1)
 plot(ST_Error, ylab="% Error")
 
-# OJO: Aunque ya es clase Date, la fecha la transforma en entero 
+# OJO, aunque ya es clase Date, la fecha la transforma en entero 
 # Con as.Date sale lo mismo
 
 ```
