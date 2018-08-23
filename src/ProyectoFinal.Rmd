@@ -39,7 +39,7 @@ library(animation) # gif
 ```{r}
 # Leemos los datos de nuestro data set
 
-data <- read_excel("../dat/DatosSmarkia.xls")
+data <- read_excel("../dat/Datos.xls")
 df.data <- as.data.frame(data)
 View(df.data)
 ```
