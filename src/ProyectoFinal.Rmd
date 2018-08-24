@@ -30,6 +30,7 @@ library(rpart) # decision tree method
 library(rpart.plot) # tree plot
 library(party) # decision tree method
 library(forecast) # forecasting methods
+library(tseries)
 #library(ggforce) # visualization tools
 #library(plotly) # interactive visualizations
 library(grid) # visualizations
@@ -461,8 +462,180 @@ fcast <- forecast::forecast(forecast::auto.arima(data.arima), h=149)
 plot(fcast)
 ```
 
+#########################################
+##  SEGUNDO INTENTO METODOLOGIA ARIMA  ##
+#########################################
+
+#Paso 1: Examinar datos
+
 ```{r}
+df.data$Date = as.Date(df.data$FECHA)
+
+ggplot(df.data, aes(Date, KWH)) + geom_line() + scale_x_date('MES')  + ylab("Consumo KWH") + xlab("")
+```
+
+```{r}
+# Consideramos que no hay una relacion directa entre el consumo de un dia y del siguiente, la temperatura puede oscilar, la afluencia puede cambiar mucho, etc. Por si el dataset tuviera algunos valores volátiles, voy a eliminar valores atipicos de series temporales
+
+KWH_ts = ts(df.data[, c('KWH')])
+
+df.data$clean_KWH= tsclean(KWH_ts)
+
+ggplot() + geom_line(data = df.data, aes(x = Date, y = clean_KWH)) + ylab('Consumo KWH Limpio')
 
 ```
 
+Los datos son bastante similares.
+Para suavizar las fluctuaciones de la curva utilizamos el promedio movil.
+Cuanto mas ancha es la ventana de la media movil, mas suave se vuelve la serie original. En nuestro caso, podemos tomar la media movil semanal o mensual, suavizando la serie en algo mas estable y, por lo tanto, mas predecible.
+
+```{r}
+# Promedio movil o en ingles Mobile Average (ma)
+
+df.data$KWH_ma = ma(df.data$clean_KWH, order=7) 
+df.data$KWH_ma30 = ma(df.data$clean_KWH, order=30)
+
+
+ggplot() + geom_line(data = df.data, aes(x = Date, y = clean_KWH, colour = "Consumo KWH Limpio")) +
+  geom_line(data = df.data, aes(x = Date, y = KWH_ma, colour = "Promedio Movil Semanal"))  +
+  geom_line(data = df.data, aes(x = Date, y = KWH_ma30, colour = "Promedio Movil Mensual"))  +
+  ylab('Consumo')
+
+```
+
+
+# Paso 2: Descomposicion de la serie
+
+Los componentes basicos de un analisis de series de tiempo son la estacionalidad, la tendencia y el ciclo. El proceso de extraccion de estos componentes se conoce como descomposicion
+
+```{r}
+# Calculamos el componente estacional de los datos usando stl()
+
+Consumo_ma = ts(na.omit(df.data$KWH_ma), frequency=30)
+decomp = stl(Consumo_ma, s.window="periodic")
+deseasonal_KWH <- seasadj(decomp)
+plot(decomp)
+
+```
+
+# Paso 3: Estacionariedad
+
+La instalacion de un modelo ARIMA requiere que la serie sea estacionaria. La prueba aumentada Dickey-Fuller (ADF) es una prueba estadistica formal para la estacionalidad, donde la hipotesis nula supone que la serie no es estacionaria
+
+```{r}
+adf.test(Consumo_ma, alternative = "stationary")
+```
+
+Con estos valores no queda claro si es estacionaria o no
+
+
+# Paso 4: Diagramas de autocorrelacion
+
+Los diagramas de autocorrelacion son una herramienta visual util para determinar si una serie es estacionaria. Estas parcelas tambien pueden ayudar a elegir los parametros de orden para el modelo ARIMA.
+
+```{r}
+# Identificacion de modelos ARIMA (p,d,q)
+# ACF: auto correlation function, nos ayuda con el modelo q
+Acf(Consumo_ma, main='')
+
+# PACF: Partial autocorrelation function, nos ayuda con el modelo p
+Pacf(Consumo_ma, main='')
+```
+
+En la segunda grafica vemos un patron oscilante alrededor de 0 sin una tendencia fuerte visible. Esto sugiere que la diferenciacion de los terminos del orden 1 (d=1) es suficiente y debe incluirse en el modelo.
+
+```{r}
+Consumo_d1 = diff(deseasonal_KWH, differences = 1)
+plot(Consumo_d1)
+adf.test(Consumo_d1, alternative = "stationary")
+
+```
+
+Si observamos esta serie, esta serie diferenciada tiende a estacionaria. Los picos en momentos particulares pueden ayudar a informar la eleccion de p o q  para nuestro modelo
+
+```{r}
+Acf(Consumo_d1, main='ACF para Series Diferenciadas')
+Pacf(Consumo_d1, main='PACF para Series Diferenciadas')
+```
+
+
+# Paso 5: Ajustar el modelo ARIMA
+
+La funcion arima nos permite especificar explicitamente los parametros del modelo o generar automaticamente un conjunto optimo de (p, d, q) usando auto.arima (). Esta funcion busca a traves de combinaciones de parametros y selecciona el conjunto que optimiza los criterios de ajuste del modelo.
+
+```{r}
+auto.arima(deseasonal_KWH, seasonal=FALSE)
+```
+
+Coeficiente ar1 p = 0.7436 nos dice que el siguiente valor de la serie se toma como un valor anterior atenuado por un factor de 0,7436 y depende del retardo de error anterior.
+
+
+# Paso 6: Evaluar e iterar
+
+Vamos a examinar los graficos ACF y PACF para los residuos del modelo
+
+```{r}
+fit1<-auto.arima(deseasonal_KWH, seasonal=FALSE)
+tsdisplay(residuals(fit1), lag.max=45, main='(5,1,4) Residuos del Modelo')
+```
+
+Hay un claro patron presente en ACF, FAP y Residuos del Modelo que se repite en el retardo 7. Esto indica que nuestro modelo puede mejorarse con un nuevo parametro q = 7.
+
+```{r}
+fit2 = arima(deseasonal_KWH, order=c(5,1,7))
+
+fit2
+
+tsdisplay(residuals(fit2), lag.max=15, main='Residuales Modelo Estacional')
+
+```
+
+
+# Paso 7: Pronosticos
+
+Podemos especificar el horizonte de pronostico h (periodos por delante) para que se realicen las predicciones usando el modelo ajustado.
+
+```{r}
+fcast <- forecast(fit2, h=60)
+plot(fcast)
+```
+
+Otra opcion es superponer los datos reales con las previsiones en el ultimo bloque de unidades temporales
+
+```{r}
+# Calculo prediccion para los proximos 5 meses, a partir 01/10/17
+soporte <- window(ts(deseasonal_KWH), start=578)
+
+fit_sin_soporte = arima(ts(deseasonal_KWH[-c(578:725)]), order=c(5,1,7))
+
+prediccion_sin_soporte <- forecast(fit_sin_soporte,h=150)
+plot(prediccion_sin_soporte, main=" ")
+lines(ts(deseasonal_KWH))
+```
+
+Las predicciones no son muy buenas. ¿Cómo mejorar el modelo?
+Vamos a utilizar la funcion auto.arima con estacionaliad
+
+```{r}
+fit_con_estacionalidad = auto.arima(deseasonal_KWH, seasonal=TRUE)
+fit_con_estacionalidad
+
+```
+
+Los parametros optimizados con auto.arima son (3,1,3)
+
+```{r}
+prediccion_con_estacionalidad <- forecast(fit_con_estacionalidad, h=30)
+plot(prediccion_con_estacionalidad)
+```
+
+Calculamos de nuevo los residuales con los parametros optimizados con auto.arima
+
+```{r}
+fit3 = arima(deseasonal_KWH, order=c(3,1,3))
+fit3
+
+tsdisplay(residuals(fit3), lag.max=15, main='Residuales Modelo Estacional')
+
+```
 
