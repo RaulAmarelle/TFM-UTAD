@@ -613,7 +613,7 @@ plot(prediccion_sin_soporte, main=" ")
 lines(ts(deseasonal_KWH))
 ```
 
-Las predicciones no son muy buenas. ¿Cómo mejorar el modelo?
+Las predicciones no son muy buenas. ¿Como mejorar el modelo?
 Vamos a utilizar la funcion auto.arima con estacionaliad
 
 ```{r}
