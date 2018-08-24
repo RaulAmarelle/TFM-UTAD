@@ -475,7 +475,7 @@ ggplot(df.data, aes(Date, KWH)) + geom_line() + scale_x_date('MES')  + ylab("Con
 ```
 
 ```{r}
-# Consideramos que no hay una relacion directa entre el consumo de un dia y del siguiente, la temperatura puede oscilar, la afluencia puede cambiar mucho, etc. Por si el dataset tuviera algunos valores volátiles, voy a eliminar valores atipicos de series temporales
+# Consideramos que no hay una relacion directa entre el consumo de un dia y del siguiente, la temperatura puede oscilar, la afluencia puede cambiar mucho, etc. Por si el dataset tuviera algunos valores volatiles, voy a eliminar valores atipicos de series temporales
 
 KWH_ts = ts(df.data[, c('KWH')])
 
