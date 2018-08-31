@@ -1,7 +1,7 @@
 ---
 title: "Trabajo Final Master"
 author: "Raul Amarelle"
-date: "21 de agosto de 2018"
+date: "31 de agosto de 2018"
 output: html_document
 ---
 
@@ -9,7 +9,7 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-Cargamos librerias necesarias para todo el archivo
+Cargamos librerias necesarias para todo el proyecto
 
 ```{r}
 library(readxl)
@@ -188,8 +188,14 @@ ggpairs(data = df.data[, c(2,3,4,5,6,13)])
 3. Analisis tendencia del consumo
 
 ```{r}
-g <- ggplot(df.data, aes(x=FECHA, y=KWH)) +  geom_line() + geom_smooth(method="lm", colour="red") + geom_smooth(method="loess") + scale_y_continuous(limits = c(0, 20000),"Potencia KWH")
-plot(g)
+ggplot(df.data, aes(x=FECHA, y=KWH)) +  
+  geom_line() + geom_smooth(method="lm", colour="red") +
+  geom_smooth(method="loess") + 
+  scale_y_continuous(limits = c(0, 20000)) + 
+  labs(x = "Evolucion Temporal",y = "Potencia KWH") + 
+  ggtitle ('Analisis tendencia del consumo') + 
+  theme(plot.title = element_text(hjust = 0.5))
+
 
 ```
 
@@ -202,13 +208,22 @@ Nuestra serie esta compuesta justo por dos anios completos, que es el requisito 
 
 ```{r}
 # Diagrama de barras de la variable Climatizacion
-ggplot(data = df.data, aes(x = CLIMATIZACION)) + geom_bar(aes(fill = CLIMATIZACION))
+
+ggplot(data = df.data, aes(x = CLIMATIZACION)) + 
+  geom_bar(aes(fill = CLIMATIZACION)) + 
+  labs(x = "Modo Climatizacion",y = "Dias Totales") + 
+  ggtitle ('Diagrama de barras de la variable Climatizacion') + 
+  theme(plot.title = element_text(hjust = 0.5))
 ```
 
 ```{r}
 # Grafico circular de la variable Climatizacion
 
-ggplot(data = df.data, aes(factor(1), fill=factor(CLIMATIZACION))) + geom_bar(width=1)+ coord_polar(theta="y")
+ggplot(data = df.data, aes(factor(1), fill=factor(CLIMATIZACION))) +
+  geom_bar(width=1)+ coord_polar(theta="y") + 
+  ggtitle ('Dias totales segun factor de Climatizacion') + 
+  theme(plot.title = element_text(hjust = 0.5))
+
 ```
 
 Tambien podemos ver que más del 50% de los dias el sistema de climatizacion funciona en regimen de calefaccion y poco mas de un tercio en refrigeracion
@@ -234,7 +249,10 @@ aggregate(formula = AFLUENCIA ~ MONTH, data = df.data, FUN = mean)
 
 df.data$WEEKDAY <-  factor(df.data$WEEKDAY,c('lunes','martes','miércoles','jueves','viernes','sábado','domingo'))
 
-ggplot(df.data, aes(WEEKDAY, AFLUENCIA)) + geom_boxplot()
+ggplot(df.data, aes(WEEKDAY, AFLUENCIA)) + geom_boxplot() +
+  labs(x = "Dia de la semana",y = "Personas") + 
+  ggtitle ('Afluencia segun dia de la semana') + 
+  theme(plot.title = element_text(hjust = 0.5))
 ```
 
 Sorprendentemente, los dias de mayor asistencia son miercoles y jueves. Esperaba que fueran los dias del fin de semana
@@ -244,7 +262,10 @@ Sorprendentemente, los dias de mayor asistencia son miercoles y jueves. Esperaba
 
 df.data$MONTH <-  factor(df.data$MONTH, c('1','2','3','4','5','6','7','8','9','10','11','12'))
 
-ggplot(df.data, aes(MONTH, AFLUENCIA)) + geom_boxplot()
+ggplot(df.data, aes(MONTH, AFLUENCIA)) + geom_boxplot() +
+  labs(x = "Mes",y = "Personas") + 
+  ggtitle ('Afluencia por mes') + 
+  theme(plot.title = element_text(hjust = 0.5))
 
 ```
 
@@ -263,15 +284,21 @@ aggregate(formula = KWH ~ MONTH, data = df.data, FUN = mean)
 ```{r}
 # Valores de potencia con boxplot y ordenados por dia de la semana
 
-ggplot(df.data, aes(WEEKDAY, KWH)) + geom_boxplot()
+ggplot(df.data, aes(WEEKDAY, KWH)) + geom_boxplot() +
+  labs(x = "Dia de la semana",y = "KWH") + 
+  ggtitle ('Consumo Potencia segun dia de la semana') + 
+  theme(plot.title = element_text(hjust = 0.5))
 ```
 
-El dia de la semana que mas consumo hay es el viernes, cuando el dia con mayor asistencia es el miercoles
+El dia de la semana que mas consumo hay es el viernes, cuando el dia con mayor asistencia es el miercoles. Tambien vemos que hay un aumento progresivo de desde el lunes (min) a viernes (max).
 
 ```{r}
 # Analizamos la potencia consumida por meses del año
 
-ggplot(df.data, aes(MONTH, KWH)) + geom_boxplot()
+ggplot(df.data, aes(MONTH, KWH)) + geom_boxplot() +
+  labs(x = "Mes",y = "KWH") + 
+  ggtitle ('Consumo Potencia segun el mes') + 
+  theme(plot.title = element_text(hjust = 0.5))
 
 ```
 
@@ -287,8 +314,13 @@ pairs(~KWH+CCDD20+CHDD18+AFLUENCIA,data=df.data, main="Scatterplot Matrix")
 
 ```
 
+Aunque hay bastante dispersion en los datos, veo una fuerte dependencia entre Consumo vs Afluencia.
+Tambien llama la atencion la relacion entre Consumo y CCDD20 (Refrigeracion). Esto es coherente, cuanta mayor diferencia de temperatura con el exterior, mayor consumo. Ya vimos anteriormente que en los meses de verano hay mucho más consumo.
+En cambio, en modo Calefaccion (CHDD18), al ser una linea plana significa que para el mismo consumo hay dias de poca diferencia de temperatura y otros dias de mayor gradiente termico.
+
+
 ```{r}
-# Calculamos las correlaciones entre las variables anteriores
+# Calculamos las correlaciones entre las variables anteriores, para confirmar numericamente las relaciones
 
 correlation <- cor(df.data[,c(2,4,5,6)])
 correlation
@@ -298,6 +330,18 @@ correlation
 #########################################
 #  CASOS DE ANALISIS SERIES TEMPORALES  #
 #########################################
+
+Recopilemos. Tenemos un dataset de un centro comercial. Hemos hecho tratamiento de datos y hemos generado plots para extraer información relevante de las variables.
+
+Pero el objetivo principal con este dataset es desarrollar un modelo predictivo que prediga nuestro Consumo Real (KWH) y mejorar en la medida de lo posible, los resultados de su variable de prediccion (LB).
+
+Para conseguirlo vamos a definir nuestro plan:  
+1. Aplicar diferentes metodos de analisis a nuestra serie.  
+2. Analizar la calidad predictiva de cada modelo.  
+3. Escoger el modelo que mejor prediga.  
+4. Comparar el error entre su modelo predictivo y nuestra mejor propuesta.  
+5. Comprobar cual de las dos opciones es mejor.
+
 
 ## CASO 1: Impacto causal utilizando modelos bayesianos de series de tiempo
 
