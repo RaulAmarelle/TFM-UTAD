@@ -1132,3 +1132,41 @@ ggplot() +
   geom_line(data = predictions.2, aes(x = index, y = Estimated.RPART, color = 'Estimated.RPART')) +
   scale_colour_manual('', breaks = c('Real', 'Estimated.RPART'), values = c('red', 'blue'))
 ```
+
+
+################
+# CONCLUSIONES #
+################
+
+De los 4 modelos analizados, podemos llegar a la conclusion que el modelo con el que hemos obtenido mejor resultado es el ultimo, el RPART.
+
+El ultimo paso es comparar el error existente segun su modelo predictivo y el error calculado segun nuestro nuevo modelo, para decidir cual de los dos modelos predice mejor.
+
+En primer lugar, calculamos el error de las nuevas predicciones: real vs prediccion
+
+```{r}
+ERROR2 <- (df.data$KWH[701:725]-predictions.2$Estimated.RPART)/df.data$KWH[701:725] * 100
+
+```
+
+Creamos una nueva tabla compuesta por fecha y ambos errores
+```{r}
+Fecha <- df.data$FECHA[701:725]
+ERROR1 <- df.data$ERROR[701:725]
+ERRORvsERROR2 <- data.frame(Fecha,ERROR1, ERROR2)
+View(ERRORvsERROR2)
+```
+
+Ploteamos para compararlos mejor:
+```{r}
+ggplot() +  geom_line(data = ERRORvsERROR2 , aes(x = Fecha, y = ERROR1, color = 'ERROR1')) + 
+  geom_line(data = ERRORvsERROR2, aes(x = Fecha, y = ERROR2 , color = 'ERROR2')) +
+  scale_colour_manual('', breaks = c('ERROR1', 'ERROR2'), values = c('red', 'blue')) + 
+  labs(x = "Evolucion Temporal",y = "% ERROR") + 
+  ggtitle ('Error Modelo 1 vs Error Modelo 2') + 
+  theme(plot.title = element_text(hjust = 0.5))
+  
+```
+
+Segun podemos observar, el nuevo modelo predictivo predice mejor porque la grafica apenas se desvia del 0, mientras el modelo predictivo inicial tiene algunos picos del 15% o del 8% de error.
+
