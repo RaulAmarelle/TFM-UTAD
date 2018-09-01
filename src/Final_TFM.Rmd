@@ -507,7 +507,7 @@ ggplot() +
 ```
 
 
-Al añadir una nueva componente de tendencia se mejora el MAPE, pasa del 72% al 56%. No obstante, las predicciones siguen lejos de la potencia consumida.
+Al añadir una nueva componente de tendencia se mejora la prevision y baja sensiblemente el MAPE%. No obstante, las predicciones siguen lejos de la potencia consumida.
 
 Podemos concluir que las predicciones no son de buena calidad.
 
@@ -613,10 +613,13 @@ graph
 
 ```
 
-El modelo predictivo parece bastante bueno, aunque ofrece dudas por el intervalo de confianza.
+El modelo predictivo parece bastante bueno, aunque ofrece dudas por el amplio intervalo de confianza.
 
 
 ## CASO 3: METODO ARIMA
+
+Los modelos ARIMA son una clase de modelo de pronostico que utiliza informacion historica para hacer predicciones y esta pensado para suavizar las fluctuaciones de la curva utilizamos el promedio movil.  
+Cuanto mas ancha es la ventana de la media movil, mas suave se vuelve la serie original. En nuestro caso, podemos tomar la media movil semanal o mensual, suavizando la serie en algo mas estable y, por lo tanto, mas predecible.
 
 Paso 1: Examinar datos
 
@@ -659,9 +662,9 @@ Paso 2: Descomposicion de la serie
 Los componentes basicos de un analisis de series de tiempo son la estacionalidad, la tendencia y el ciclo. El proceso de extraccion de estos componentes se conoce como descomposicion
 
 ```{r}
-# Calculamos el componente estacional de los datos usando stl()
+# Calculamos el doble componente estacional de los datos (semanal, anual) usando stl()
 
-Consumo_ma = ts(na.omit(df.data$KWH_ma), frequency=30)
+Consumo_ma = ts(na.omit(df.data$KWH_ma), frequency=7)
 decomp = stl(Consumo_ma, s.window="periodic")
 deseasonal_KWH <- seasadj(decomp)
 plot(decomp)
@@ -671,21 +674,30 @@ plot(decomp)
 
 Paso 3: Estacionariedad
 
-La instalacion de un modelo ARIMA requiere que la serie sea estacionaria. La prueba aumentada Dickey-Fuller (ADF) es una prueba estadistica formal para la estacionalidad, donde la hipotesis nula supone que la serie no es estacionaria
+La aplicacion de un modelo ARIMA requiere que la serie sea estacionaria. La prueba aumentada Dickey-Fuller (ADF) es una prueba estadistica formal para comprobar la estacionalidad, donde:  
+Ho: La serie es no estacionaria: Tiene raiz unitaria  
+H1: La serie es estacionaria: No Tiene raiz unitaria  
+
 
 ```{r}
 adf.test(Consumo_ma, alternative = "stationary")
 ```
 
-Con estos valores no queda claro si es estacionaria o no
+La serie original no es estacionaria porque tiene raiz unitaria (-2.05) y el valor p es 0.55
 
+```{r}
+adf.test(diff(Consumo_ma), alternative = "stationary")
+```
+
+En cambio, la serie en primera diferencia es estacionaria. El valor del estadistico es -9.5, con un valor p menor a 0.05 (0.01) por lo que la hipotesis nula ya se puede rechazar.
+  
 
 Paso 4: Diagramas de autocorrelacion
 
 Los diagramas de autocorrelacion son una herramienta visual util para determinar si una serie es estacionaria. Estas parcelas tambien pueden ayudar a elegir los parametros de orden para el modelo ARIMA.
 
 ```{r}
-# Identificacion de modelos ARIMA (p,d,q)
+# Identificacion de coeficientes para modelo ARIMA (p,d,q)
 # ACF: auto correlation function, nos ayuda con el modelo q
 Acf(Consumo_ma, main='')
 
@@ -693,7 +705,7 @@ Acf(Consumo_ma, main='')
 Pacf(Consumo_ma, main='')
 ```
 
-En la segunda grafica vemos un patron oscilante alrededor de 0 sin una tendencia fuerte visible. Esto sugiere que la diferenciacion de los terminos del orden 1 (d=1) es suficiente y debe incluirse en el modelo.
+Como hemos visto antes, la serie en primera diferencia es estacionaria. Lo que significa que nuestro modelo tendrá d=1
 
 ```{r}
 Consumo_d1 = diff(deseasonal_KWH, differences = 1)
@@ -709,6 +721,8 @@ Acf(Consumo_d1, main='ACF para Series Diferenciadas')
 Pacf(Consumo_d1, main='PACF para Series Diferenciadas')
 ```
 
+Analizando el grafico anterior ACF, se observa en retardos importantes en los picos 1, 2 y 7, lo que significa que son nuestros candidatos para q.
+En cambio, la componente parcial PACF vemos que tiene claramente el pico en el 1, lo que supone el coeficiente p=1
 
 Paso 5: Ajustar el modelo ARIMA
 
@@ -718,7 +732,7 @@ La funcion arima nos permite especificar explicitamente los parametros del model
 auto.arima(deseasonal_KWH, seasonal=FALSE)
 ```
 
-Coeficiente ar1 p = 0.7436 nos dice que el siguiente valor de la serie se toma como un valor anterior atenuado por un factor de 0,7436 y depende del retardo de error anterior.
+Vemos que nos genera un modelo ARIMA(3,1,3) 
 
 
 Paso 6: Evaluar e iterar
@@ -727,13 +741,13 @@ Vamos a examinar los graficos ACF y PACF para los residuos del modelo
 
 ```{r}
 fit1<-auto.arima(deseasonal_KWH, seasonal=FALSE)
-tsdisplay(residuals(fit1), lag.max=45, main='(5,1,4) Residuos del Modelo')
+tsdisplay(residuals(fit1), lag.max=45, main='(3,1,3) Residuos del Modelo')
 ```
 
-Hay un claro patron presente en ACF, FAP y Residuos del Modelo que se repite en el retardo 7. Esto indica que nuestro modelo puede mejorarse con un nuevo parametro q = 7.
+Hay un claro patron presente en ambos plots ACF, FAP que se repite en el retardo 7. Esto indica que nuestro modelo puede mejorarse con un nuevo parametro q = 7.
 
 ```{r}
-fit2 = arima(deseasonal_KWH, order=c(5,1,7))
+fit2 = arima(deseasonal_KWH, order=c(3,1,7))
 
 fit2
 
@@ -747,25 +761,25 @@ Paso 7: Pronosticos
 Podemos especificar el horizonte de pronostico h (periodos por delante) para que se realicen las predicciones usando el modelo ajustado.
 
 ```{r}
-fcast <- forecast(fit2, h=60)  #h=60, a dos meses vista
+fcast <- forecast(fit2, h=30)  
 plot(fcast)
 ```
 
 Otra opcion es superponer los datos reales con las previsiones en el ultimo bloque de unidades temporales
 
 ```{r}
-# Calculo prediccion para los ultimos 2 meses, a partir 01/01/18
-soporte <- window(ts(deseasonal_KWH), start=670)
+# Calculo prediccion para los ultimos 2 meses, a partir 01/02/18
+soporte <- window(ts(deseasonal_KWH), start=701)
 
-fit_sin_soporte = arima(ts(deseasonal_KWH[-c(670:725)]), order=c(5,1,7))
+fit_sin_soporte = arima(ts(deseasonal_KWH[-c(701:725)]), order=c(3,1,7))
 
-prediccion_sin_soporte <- forecast(fit_sin_soporte,h=55)
+prediccion_sin_soporte <- forecast(fit_sin_soporte,h=25)
 plot(prediccion_sin_soporte, main=" ")
 lines(ts(deseasonal_KWH))
 ```
 
 Las predicciones no son muy buenas. Como mejorar el modelo?
-Por ejemplo vamos a utilizar la funcion auto.arima con estacionaliad
+Por ejemplo vamos a utilizar la funcion auto.arima con estacionalidad
 
 ```{r}
 fit_con_estacionalidad = auto.arima(deseasonal_KWH, seasonal=TRUE)
@@ -773,19 +787,18 @@ fit_con_estacionalidad
 
 ```
 
-Los parametros optimizados con auto.arima son (3,1,3)
 
 ```{r}
 prediccion_con_estacionalidad <- forecast(fit_con_estacionalidad, h=30)
 plot(prediccion_con_estacionalidad)
 ```
 
-Los resultados predictivos son decepcionantes a corto plazo. He realizado pruebas de simulación a mayor plazo (6 meses, h=180) pero tampoco parece reaccionar la curva. 
+Los resultados predictivos son decepcionantes. He realizado diferentes pruebas de simulacion pero en ningun caso parece reaccionar la curva. 
 
 En cualquier caso, para finalizar calculamos de nuevo los residuales con los parametros optimizados con auto.arima
 
 ```{r}
-fit3 = arima(deseasonal_KWH, order=c(3,1,3))
+fit3 = arima(deseasonal_KWH, order=c(3,1,7))
 fit3
 
 tsdisplay(residuals(fit3), lag.max=15, main='Residuales Modelo Estacional')
@@ -801,7 +814,7 @@ Paso 2(*): Descomp
 # Calculamos el componente estacional de los datos usando STR()
 library(stR)
 
-Consumo_ma = ts(na.omit(df.data$KWH_ma), frequency=30)
+Consumo_ma_stR = ts(na.omit(df.data$KWH_ma), frequency=7)
 decomp.fit = AutoSTR(Consumo_ma)
 
 plot(decomp.fit)
@@ -887,7 +900,7 @@ El error es razonable dentro de lo que cabe, pero para mejorar predicciones hay 
 
 2. TREE 2
 
-Vamos a especificar los siguientes parámetros:
+Vamos a especificar los siguientes parámetros:  
 - minsplit  
 - maxdepth  
 - cp  
@@ -1091,7 +1104,7 @@ Se obtiene la misma configuracion que en el caso anterior aunque disminuye liger
 
 Vamos a centrar la busqueda de los hiperparametros como se indica:
 
-- Por lo visto en el caso de tree1 y tree2, cuando entrenabamos y predeciamos con la misma serie de datos, a mayor profundiad de los arboles se tiende al overfitting. En estos dos ultimos casos lo hemos comprobado viendo que la mejor predicción (menor MAPE), tomaba como max_depth el valor minimo posible (5). Es por esto que vamos a dirigir la busqueda de este hiperparametro hacia valores menores de maxima profundiad.
+- Por lo visto en el caso de tree1 y tree2, cuando entrenabamos y predeciamos con la misma serie de datos, a mayor profundiad de los arboles se tiende al overfitting. En estos dos ultimos casos lo hemos comprobado viendo que la mejor predicción (menor MAPE), tomaba como max_depth el valor minimo posible (5). Es por esto que vamos a dirigir la busqueda de este hiperparametro hacia valores menores de maxima profundidad.
 
 - En cuanto al minimo numero de splits, y tal como se ha experimentado podemos ver que es 6 para ambos casos y que a su vez es el mayor numero de la serie propuesta. Aumentaremos los valores de la serie.
 
