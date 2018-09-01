@@ -1,7 +1,7 @@
 ---
 title: "Trabajo Final Master"
 author: "Raul Amarelle"
-date: "31 de agosto de 2018"
+date: "1 de septiembre de 2018"
 output: html_document
 ---
 
@@ -101,7 +101,7 @@ View(df.data)
 ```
 
 ```{r}
-# Cambiamos la clase a FECHA, para que pase de chr a Date
+# Cambiamos la clase a variable FECHA, para que pase de chr a Date
 
 df.data$FECHA <- as.Date(df.data$FECHA, format="%d/%m/%Y")
 
@@ -109,24 +109,27 @@ str(df.data)
 
 ```
 
-```{r}
-## Puede ser interesante crear una columna categorica Entre semana (ES) y Fin de semana (FS), para analizar posibles cambios de comportamiento
 
+A priori parece interesante crear una columna categorica Entre Semana (ES) y Fin de Semana (FS), para analizar posibles cambios de comportamiento.
+
+```{r}
 # En primer lugar creamos la variable WEEKDAY que nos dice que a dia de la semana corresponde cada fecha
 
 df.data$WEEKDAY <- weekdays(df.data$FECHA)
 
-# Creamos la variable categorica entre semana (ES) y fin de semana (FS)
+# Creamos la variable categorica 
 df.data$FINDE <- ifelse(df.data$WEEKDAY %in% c('sábado', 'domingo'), 'FS', 'ES')
 
 View(df.data)
 ```
 
+
+Creamos la variable categorica Climatizacion, con 3 opciones en funcion del gradiente de temperatura:
+
 ```{r}
-# Creamos la variable categorica Climatizacion, que tomara 3 valores:
-#   - Heating
-#   - Cooling
-#   - Neutro
+#   - Heating: CCDD20 es 0 y CHDD18 tiene valor
+#   - Cooling: CCDD20 tiene valor y CHDD18 es 0
+#   - Neutro: tanto CCDD20 como CHDD18 son 0
 
 df.data$CLIMATIZACION <- ifelse(df.data$CCDD20 > 0, 'Cooling',
                                          ifelse(df.data$CHDD18 > 0, 'Heating', 'Neutro'))
@@ -134,8 +137,11 @@ df.data$CLIMATIZACION <- ifelse(df.data$CCDD20 > 0, 'Cooling',
 View(df.data)
 ```
 
+
+Creamos una nueva columna, que la llamaremos ERROR, que sera el % de error del modelo actual.
+
 ```{r}
-# Creamos una nueva columna, que la llamaremos ERROR, que sera el % de error de la potencia consumida vs prevision de potencia
+# Compara la potencia consumida real vs la prevision
 df.data$ERROR <- (df.data$KWH-df.data$LB)/df.data$KWH * 100
 
 View(df.data)
@@ -199,8 +205,8 @@ ggplot(df.data, aes(x=FECHA, y=KWH)) +
 
 ```
 
-Si nos fijamos en la linea roja, se aprecia que hay una ligera tendencia de disminucion del consumo a lo largo de estos dos anios, motivada por la bajada de consumo de los ultimos 3-4 meses. 
-Para extraer alguna conclusion mas solida habria que analizar un periodo mas amplio, pues al ser la disminucion más pronunciada al final, podria ser por un motivo coyuntural en una epoca del año con extraordinario buen tiempo.
+Si nos fijamos en la linea roja, se aprecia que hay una ligera tendencia de disminucion del consumo a lo largo de estos dos anios, motivada por la bajada de consumo de los ultimos 3-4 meses de nuestros datos.  
+Para extraer alguna conclusion mas solida habria que analizar un periodo mas amplio, pues al ser la disminucion mas pronunciada al final, podria ser por un motivo coyuntural en una epoca del año con extraordinario buen tiempo.
 Nuestra serie esta compuesta justo por dos anios completos, que es el requisito minimo para que se pueda afirmar.
 
 
@@ -226,7 +232,7 @@ ggplot(data = df.data, aes(factor(1), fill=factor(CLIMATIZACION))) +
 
 ```
 
-Tambien podemos ver que más del 50% de los dias el sistema de climatizacion funciona en regimen de calefaccion y poco mas de un tercio en refrigeracion
+Tambien podemos ver que mas del 50% de los dias el sistema de climatizacion funciona en regimen de calefaccion y poco mas de un tercio en Refrigeracion
 
 
 5. Analisis de la variable Afluencia:
@@ -255,7 +261,7 @@ ggplot(df.data, aes(WEEKDAY, AFLUENCIA)) + geom_boxplot() +
   theme(plot.title = element_text(hjust = 0.5))
 ```
 
-Sorprendentemente, los dias de mayor asistencia son miercoles y jueves. Esperaba que fueran los dias del fin de semana
+Sorprendentemente, los dias de mayor asistencia son miercoles y jueves. Esperaba que fuera el sabado en particular.
 
 ```{r}
 # Analizamos la asistencia por meses del año
@@ -269,7 +275,8 @@ ggplot(df.data, aes(MONTH, AFLUENCIA)) + geom_boxplot() +
 
 ```
 
-Tambien en mi opinion de manera sorprendente, los meses de mayor afluencia son julio y agosto, meses que supones que la gente esta de vacaciones y sale mas con el buen tiempo
+Tambien en mi opinion de manera sorprendente, los meses de mayor afluencia son julio y agosto, cuando imaginas que la gente esta de vacaciones y sale mas con el buen tiempo. Y es que casi dobla, de unas 12.000 personas durante los meses de invierno a casi 20.000 en verano.
+
 
 6. Analisis de la variable potencia
 
@@ -290,7 +297,7 @@ ggplot(df.data, aes(WEEKDAY, KWH)) + geom_boxplot() +
   theme(plot.title = element_text(hjust = 0.5))
 ```
 
-El dia de la semana que mas consumo hay es el viernes, cuando el dia con mayor asistencia es el miercoles. Tambien vemos que hay un aumento progresivo de desde el lunes (min) a viernes (max).
+Hay un contraste entre el dia de la semana que mas consumo hay (viernes) con el de mayor asistencia (miercoles). Tambien vemos que hay un aumento progresivo de desde el lunes (min) a viernes (max).
 
 ```{r}
 # Analizamos la potencia consumida por meses del año
@@ -314,9 +321,9 @@ pairs(~KWH+CCDD20+CHDD18+AFLUENCIA,data=df.data, main="Scatterplot Matrix")
 
 ```
 
-Aunque hay bastante dispersion en los datos, veo una fuerte dependencia entre Consumo vs Afluencia.
+Aunque hay bastante dispersion en los datos, en primer lugar destaca una fuerte dependencia entre Consumo vs Afluencia.
 Tambien llama la atencion la relacion entre Consumo y CCDD20 (Refrigeracion). Esto es coherente, cuanta mayor diferencia de temperatura con el exterior, mayor consumo. Ya vimos anteriormente que en los meses de verano hay mucho más consumo.
-En cambio, en modo Calefaccion (CHDD18), al ser una linea plana significa que para el mismo consumo hay dias de poca diferencia de temperatura y otros dias de mayor gradiente termico.
+En cambio, en modo Calefaccion (CHDD18), al ser una linea plana significa que para el mismo consumo hay dias de poca diferencia de temperatura y otros dias con mayor gradiente termico.
 
 
 ```{r}
@@ -331,7 +338,7 @@ correlation
 #  CASOS DE ANALISIS SERIES TEMPORALES  #
 #########################################
 
-Recopilemos. Tenemos un dataset de un centro comercial. Hemos hecho tratamiento de datos y hemos generado plots para extraer información relevante de las variables.
+Recopilemos. Tenemos un dataset de un centro comercial. Hemos hecho tratamiento de datos y hemos generado plots para extraer informacion relevante de las variables.
 
 Pero el objetivo principal con este dataset es desarrollar un modelo predictivo que prediga nuestro Consumo Real (KWH) y mejorar en la medida de lo posible, los resultados de su variable de prediccion (LB).
 
@@ -342,8 +349,12 @@ Para conseguirlo vamos a definir nuestro plan:
 4. Comparar el error entre su modelo predictivo y nuestra mejor propuesta.  
 5. Comprobar cual de las dos opciones es mejor.
 
+La dificultad de analizar esta serie viene dada porque esta compuesta por muestras diarias en un ciclo estacional de dos años. Al tener justo el ciclo de dos años, se observa claramente una estacionalidad anual. Pero por otro lado, tampoco es una serie de amplio rango lo suficientemente larga (ej. diez años) ni tampoco en periodos mas cortos se observa una estacionalidad aparente (semana, mes).
+
 
 ## CASO 1: Impacto causal utilizando modelos bayesianos de series de tiempo
+
+Tal y como hemos comentado, queremos comparar el error de dos modelos predictivos, el actual y el nuevo. Asi que empezaremos por calcular el error actual.
 
 ```{r}
 # Analizamos la evolucion de la variable Error
@@ -353,9 +364,9 @@ plot(ST_Error, xlab= "Periodo", ylab="% Error")
 
 ```
 
-Como podemos ver en el plot anterior, la evolucion de la variable ERROR no es estacional. Como primera aproximacion, podemos observar que el modelo de prediccion ha mejorado a partir de la segunda mitad de anio, ya que el % Error es mucho menor, tiende a concentrarse en la horquilla de -10% a +10%.
+Como podemos ver en el plot anterior, la evolucion de la variable ERROR no es estacional. Como primera aproximacion, podemos observar que el modelo de prediccion ha mejorado a partir de la segunda mitad de 2017, ya que el % Error es mucho menor, tiende a concentrarse en la horquilla de -10% a +10%.
 
-Vamos a suponer que a partir de la medicion 426, coincidiendo con el 01/05/2017, se han introducido mejoras en el algoritmo de prediccion y vamos a comparar la mejora
+Vamos a suponer que a partir de la medicion 426, coincidiendo con el 01/05/2017, se han introducido mejoras en el algoritmo de prediccion y vamos a comparar la mejora aplicando Causal Impact.
 
 ```{r}
 pre_period <- c(1, 425)
@@ -374,7 +385,7 @@ summary(impact)
 summary(impact, "report")
 ```
 
-El resultado del analisis es que la intervencion redujo la prevision de ERROR en un 87%.
+El resultado del analisis nos dice que la intervencion en el modelo redujo la prevision de ERROR en un 87%.
 
 
 Ahora vamos a probar personalizando el modelo con bsts.model
@@ -385,7 +396,7 @@ bsts.model <- bsts(df.data$KWH, ss, niter = 1000)
 ```
 
 LOCAL LINEAR TREND: asume que tanto la media como la pendiente de la serie sigue un camino aleatorio.  
-SEASONAL: representa la contribución de cada mes al ciclo anual. Hay que especificarle el número de periodos. Una buena opción puede ser los meses del año.  
+SEASONAL: representa la contribucion de cada mes al ciclo anual. Hay que especificarle el numero de periodos. Una buena opcion puede ser los meses del anio.  
 
 ```{r}
 # Preparamos nuevos datos para el Bayesian, eliminando unas columnas que considero que no son de interes para el modelo
@@ -393,7 +404,7 @@ data.bsts <- df.data[,-c(3,7,9,13)]
 ```
 
 
-Opción 1. Tantos períodos como semanas del año
+Opcion 1. Tantos periodos como semanas del año
 ```{r}
 starting.point <- 100
 end.point <- 465
@@ -421,7 +432,7 @@ mape.bsts.1 <- MAPE(data.bsts$KWH[(end.point +1):(end.point+test.length)], numer
 paste('MAPE: ', round(mape.bsts.1*100, 2), '%')
 ```
 
-Ploteamos a ver que tal las predicciones
+Ploteamos las predicciones:
 ```{r}
 
 predictions.bsts.1 = data.frame(matrix(nrow = 100, ncol = 3))
@@ -437,7 +448,9 @@ ggplot() +
 
 ```
 
-Opción 2. Tantos periodos como meses del año y añadimos MonthlyAnnualCycle
+El resultado de la prevision queda el valor estimado muy por debajo del real.
+
+Opcion 2. Tantos periodos como meses del anio y le incluimos MonthlyAnnualCycle
 
 ```{r}
 starting.point <- 100
@@ -469,7 +482,8 @@ paste('MAPE: ', round(mape.bsts.2*100, 2), '%')
  
 ```
 
-Ploteamos a ver que tal las predicciones
+Ploteamos las predicciones:
+
 ```{r}
 
 predictions.bsts.2 = data.frame(matrix(nrow = 100, ncol = 3))
@@ -486,7 +500,9 @@ ggplot() +
 ```
 
 
-Al añadir una nueva componente de tendencia se mejora ligeramente el MAPE. No obstante, las predicciones siguen sin ser muy ajustadas.
+Al añadir una nueva componente de tendencia se mejora ligeramente el MAPE. No obstante, las predicciones siguen lejos del real.
+
+Podemos concluir que las predicciones no son de buena calidad.
 
 
 
@@ -513,7 +529,7 @@ Justificacion de los parametros escogidos:
 Analizamos la web del paquete de Holt-Winters: https://stat.ethz.ch/R-manual/R-devel/library/stats/html/HoltWinters.html  
   
 gamma: Si se establece en FALSE, se ajusta un modelo no estacional. Y en mi opinion es una serie estacional, por lo que tiene que ser !=0  
-beta: Si se establece en FALSE, la función hará suavizado exponencial. Es lo que queremos.  
+beta: Si se establece en FALSE, la función hara suavizado exponencial. Es lo que queremos.  
 Para fijar los valores de alpha y gamma tomamos esta web de referencia, que explica que son valores que oscilan entre 0 y 1 y que cuando estos valores no se conocen, recomienda los valores a usar.  
 https://support.numxl.com/hc/es/articles/215653303-TESMTH-Suavizado-triple-exponencial-de-Holt-Winters  
 
@@ -527,14 +543,14 @@ head(hw$SSE)
 ```
 
 
-Calculamos la previsión para los proximos 6 meses con un intervalo de confianza de 0,95 y representamos el pronóstico junto con los valores reales y ajustados.
+Calculamos la previsión para los proximos 6 meses con un intervalo de confianza de 0,95 y representamos el pronostico junto con los valores reales y ajustados.
 
 ```{r}
 forecast.hw <- predict(hw, n.ahead = 180, prediction.interval = T, level = 0.95)
 plot(hw, forecast.hw)
 ```
 
-He estimado las previsiones a 6 meses vista porque la serie es estacionaria y cada 6 meses hay un pico o un valle.
+He estimado las previsiones a 6 meses vista porque la serie es estacionaria y cada 6 meses hay un pico o un valle. Podemos ver que el modelo funciona y a partir de la fecha establecida, las predicciones van tomando la forma esperada.
 
 Para tener una mejor representacion de las predicciones usando el metodo Holt-Winters, utilizo ggplot2. 
 
@@ -582,13 +598,15 @@ graph
 
 ```{r}
 # Ponemos leyendas al grafico
-graph <- graph + labs(title = "Predicciones Método Holt-Winters en ggplot2")
+graph <- graph + labs(title = "Predicciones Metodo Holt-Winters en ggplot2")
 graph <- graph + ylab("Potencia KWH")
 graph <- graph + xlab("Tiempo")
 
 graph
 
 ```
+
+El modelo predictivo parece bastante bueno, aunque ofrece dudas por el intervalo de confianza.
 
 
 ## CASO 3: METODO ARIMA
@@ -687,7 +705,7 @@ Pacf(Consumo_d1, main='PACF para Series Diferenciadas')
 
 Paso 5: Ajustar el modelo ARIMA
 
-La funcion arima nos permite especificar explicitamente los parametros del modelo o generar automaticamente un conjunto optimo de (p, d, q) usando auto.arima (). Esta funcion busca a traves de combinaciones de parametros y selecciona el conjunto que optimiza los criterios de ajuste del modelo.
+La funcion arima nos permite especificar explicitamente los parametros del modelo o generar automaticamente un conjunto optimo de (p, d, q) usando auto.arima. Esta funcion busca a traves de combinaciones de parametros y selecciona el conjunto que optimiza los criterios de ajuste del modelo.
 
 ```{r}
 auto.arima(deseasonal_KWH, seasonal=FALSE)
@@ -722,14 +740,14 @@ Paso 7: Pronosticos
 Podemos especificar el horizonte de pronostico h (periodos por delante) para que se realicen las predicciones usando el modelo ajustado.
 
 ```{r}
-fcast <- forecast(fit2, h=60)
+fcast <- forecast(fit2, h=60)  #h=60, a dos meses vista
 plot(fcast)
 ```
 
 Otra opcion es superponer los datos reales con las previsiones en el ultimo bloque de unidades temporales
 
 ```{r}
-# Calculo prediccion para los ultimos 2 mesess, a partir 01/01/18
+# Calculo prediccion para los ultimos 2 meses, a partir 01/01/18
 soporte <- window(ts(deseasonal_KWH), start=670)
 
 fit_sin_soporte = arima(ts(deseasonal_KWH[-c(670:725)]), order=c(5,1,7))
@@ -755,7 +773,9 @@ prediccion_con_estacionalidad <- forecast(fit_con_estacionalidad, h=30)
 plot(prediccion_con_estacionalidad)
 ```
 
-Calculamos de nuevo los residuales con los parametros optimizados con auto.arima
+Los resultados predictivos son decepcionantes a corto plazo. He realizado pruebas de simulación a mayor plazo (6 meses, h=180) pero tampoco parece reaccionar la curva. 
+
+En cualquier caso, para finalizar calculamos de nuevo los residuales con los parametros optimizados con auto.arima
 
 ```{r}
 fit3 = arima(deseasonal_KWH, order=c(3,1,3))
@@ -766,8 +786,7 @@ tsdisplay(residuals(fit3), lag.max=15, main='Residuales Modelo Estacional')
 ```
 
 
-Los resultados de la prediccion no son muy buenos.
-Asi que vamos a rehacer el análisis ARIMA, pero descomponiendo la serie con STR.
+Como los resultados no son convincentes, vamos a descomponer la serie con STR.
 
 Paso 2(*): Descomp
 
@@ -783,13 +802,12 @@ plot(decomp.fit)
 ```
 
 
-
 ## CASO 4: Arboles de clasificacion y regresion, RPART (CART) Tree
 
-Para la prediccion de la serie temporal, no parece que cobren especial relevancia las variables Potencia Estimada (LB), Dia (DAY) y Anio (YEAR).
-Es por esto que vamos a eliminar esas columnas de nuestro dataset de datos y crear el dataframe data.rpart
- 
+Vamos a intentarlo con un ultimo modelo predictivo, RPART. Para la prediccion de la serie temporal, no parece que cobren especial relevancia las variables Potencia Estimada (LB), Dia (DAY) y Anio (YEAR).
+
 ```{r}
+# Eliminamos esas columnas de nuestro dataset y creamos el dataframe data.rpart
 data.rpart <- df.data[,-c(3,7,9,13)]
 ```
  
@@ -810,13 +828,15 @@ normalize <- function(x){
 }
 ```
 
-Vemos la importancia que cobra cada variable en la construcción de los árboles de predicción y su peso en la estimación de la potencia consumida
+Vemos la importancia que cobra cada variable en la construcción de los árboles de prediccion y su peso en la estimacion de la potencia consumida
+
 ```{r}
 tree1$variable.importance
 normalize(tree1$variable.importance)
 ```
 
-Representamos el árbol construido, es decir, tree1
+Representamos el arbol construido, es decir, tree1:
+
 ```{r}
 
 rpart.plot(tree1, digits = 2,
@@ -874,7 +894,7 @@ tree2 <- rpart(KWH ~ . , data = data.rpart,
 ```
 
 
-Representamos el arbol, es bueno ver la comparacion a nivel de complejidad con el tree1, del que esperamos que tenga peores predicciones.
+Representamos el arbol, es bueno ver la comparacion a nivel de complejidad con el tree1, del que esperamos que tenga peores predicciones que tree2.
 
 ```{r}
 plot(tree1)
@@ -888,7 +908,7 @@ paste('Numero de splits Tree2: ', tree2$cptable[dim(tree2$cptable)[1], 'nsplit']
 paste('Numero de splits Tree1: ', tree1$cptable[dim(tree1$cptable)[1], 'nsplit'])
 ```
 
-Creammos nuevo data frame con las predicciones de tree2 y los valores reales
+Creamos nuevo data frame con las predicciones de tree2 y los valores reales
 
 ```{r}
 predictions.tree2 = data.frame(matrix(nrow = 725, ncol = 3))
@@ -909,13 +929,15 @@ ggplot() +
               
 ```
 
+Vemos que practicamente ambas lineas se superponen.
+
 Metrica MAPE
 ```{r}
 error.tree2 <- MAPE(predictions.tree2$Real, predictions.tree2$Estimated.RPART)
 paste('MAPE: ', round(error.tree2*100, 2), '(%)')
 ```
 
-Se ha mejorado muchisimo la prediccion, pasando de un MAPE de 2.47 a un MAPE de 0.28
+Se ha mejorado muchisimo la prediccion, pasando de un MAPE de 2.47% a un MAPE de 0.28 %.
 
 Vamos a poner una combinacion de los hiperparametros de control para ver cual es la configuracion que mejor predice
 
@@ -931,11 +953,11 @@ for (i in prueba.cp){
   mape.pruebas.cp <- append(mape.pruebas.cp, mape.aux*100)
 }
 
-plot(-log10(prueba.cp), (mape.pruebas.cp), main = 'Métrica MAPE (%) en función del parámetro cp', 
-     xlab = 'cp (Transformado como el menos logaritmo decimal: -log10(cp))', ylab = 'Métrica MAPE (%)')
+plot(-log10(prueba.cp), (mape.pruebas.cp), main = 'Metrica MAPE (%) en funcion del parametro cp', 
+     xlab = 'cp (Transformado como -log10(cp))', ylab = 'Metrica MAPE (%)')
 ```
 
-A medida que reducimos el cp, el MAPE baja, aunque esto es un indicio de que el modelo esta bajo overfitting.
+A medida que reducimos el cp, el MAPE baja, aunque esto puede ser un indicio de que el modelo esta bajo overfitting.
 
 Tambien nos dice como estamos haciendo la segmentacion de los datos en un training y un test, no vale predecir sobre valores con los que hemos entrenado. Ademas los arboles de decision son muy propensos al overfiting. Si analizamos, en tree2 teniamos 63 split sobre 725 muestrras
 
@@ -970,7 +992,7 @@ predictions.data.1$Estimated.RPART <- predict(tree.data.1, data.test.1)
 
 ```
 
-Plot de la predicción vs el consumo real
+Plot de la prediccion vs el consumo real
 ```{r}
 ggplot() +
   geom_line(data = predictions.data.1, aes(x = index, y = Real, color = 'Real')) + 
@@ -1058,15 +1080,16 @@ paste('cp: ', hp.2.cp)
 paste('Mape asociado a esta configuración de hiperparámetros: ', round(mape.2*100,2), '(%)')
 ```
 
-Se obtiene la misma configuración que en el caso anterio que en el nuevo aunque disminuye ligeramente el MAPE.
+Se obtiene la misma configuracion que en el caso anterior aunque disminuye ligeramente el MAPE.
 
-Vamos a centrar la búsqueda de los hiperparámetros como se indica:
+Vamos a centrar la busqueda de los hiperparametros como se indica:
 
-- Por lo visto en el caso de tree1 y tree2, cuando entrenabamos y predecíamos con la misma serie de datos, a mayor profundiad de los árboles se tiende al overfitting. En estos dos últimos casos lo hemos comprobado viendo que la mejor predicción (menor MAPE), tomaba como max_depth el valor mínimo posible (5). Es por esto que vamos a dirigir la búsqueda de este hiperparámetro hacia valores menores de máxima profundiad.
+- Por lo visto en el caso de tree1 y tree2, cuando entrenabamos y predeciamos con la misma serie de datos, a mayor profundiad de los arboles se tiende al overfitting. En estos dos ultimos casos lo hemos comprobado viendo que la mejor predicción (menor MAPE), tomaba como max_depth el valor minimo posible (5). Es por esto que vamos a dirigir la busqueda de este hiperparametro hacia valores menores de maxima profundiad.
 
-- En cuanto al mínimo número de splits, y tal como se ha experimentado podemos ver que es 6 para ambos casos y que a su vez es el mayor numero de la serie propuesta. Aumentaremos los valores de la serie
+- En cuanto al minimo numero de splits, y tal como se ha experimentado podemos ver que es 6 para ambos casos y que a su vez es el mayor numero de la serie propuesta. Aumentaremos los valores de la serie.
 
-- El valor de cp, de igual manera a la máxima profundidad, cuando entrenábamos y predecíamos con los mismos datos proporcionaba mejores resultados a medida que disminuíamos el parámetro (induciendo al overfitting). En los nuevas predicciones, se ha encontrado como valor el 0.001 (mínimo local) y es en sus valores adyacentes donde centraremos la búsqueda
+- El valor de cp, de igual manera a la maxima profundidad, cuando entrenabamos y predeciamos con los mismos datos proporcionaba mejores resultados a medida que disminuiamos el parametro (induciendo al overfitting). En las nuevas predicciones, se ha encontrado como valor el 0.001 (minimo local) y es en sus valores adyacentes donde centraremos la busqueda.
+
 ```{r}
 minsplit.data.3 <- c(6,7,8,9,10)
 max_depth.data.3 <- c(1,2,3,4,5)
@@ -1096,11 +1119,11 @@ for (i in minsplit.data.3){
   }
 }
 
-paste('La mejor combinación de hiperparámetros es: ') 
+paste('La mejor combinacion de hiperparametros es: ') 
 paste('min_split: ', hp.3.min_spl)
 paste('max_depth: ', hp.3.max_dep)
 paste('cp: ', hp.3.cp)
-paste('Mape asociado a esta configuración de hiperparámetros: ', round(mape.3*100,2), '(%)')
+paste('Mape asociado a esta configuracion de hiperparametros: ', round(mape.3*100,2), '(%)')
 
 ```
 
@@ -1133,16 +1156,15 @@ for (i in minsplit.data.4){
   }
 }
 
-paste('La mejor combinación de hiperparámetros es: ') 
+paste('La mejor combinacion de hiperparametros es: ') 
 paste('min_split: ', hp.4.min_spl)
 paste('max_depth: ', hp.4.max_dep)
 paste('cp: ', hp.4.cp)
-paste('Mape asociado a esta configuración de hiperparámetros: ', round(mape.4*100,2), '(%)')
+paste('Mape asociado a esta configuracion de hiperparametros: ', round(mape.4*100,2), '(%)')
 
 ```
 
-
-Entrenamos un árbol para las dos series con los óptimos de hiperparámetros encontrados, predecimos y ploteamos:
+En ambos casos, vemos que los 4 valores salen casi calcados. Asi que para terminar, vamos a entrenar un arbol para las dos series con los optimos de hiperparametros encontrados, predecimos y ploteamos:
 
 ```{r}
 tree.tuned.1 <- rpart(KWH ~ . , data = data.train.1,
@@ -1182,9 +1204,9 @@ ggplot() +
 # CONCLUSIONES #
 ################
 
-De los 4 modelos analizados, podemos llegar a la conclusion que el modelo con el que hemos obtenido mejor resultado es el ultimo, el RPART.
+De los 4 modelos analizados, podemos llegar a la conclusion que el modelo con el que hemos obtenido mejor resultado es el ultimo, el RPART. De las 4 opciones es el que tiene mejor calidad predictiva, por tanto, es el seleccionado para pasar a la siguiente fase.
 
-El ultimo paso es comparar el error existente segun su modelo predictivo y el error calculado segun nuestro nuevo modelo, para decidir cual de los dos modelos predice mejor.
+Tal y como planteamos inicialmente, el objeto del estudio es comparar el error existente del modelo predictivo actual con el error segun un nuevo modelo desarrollado, para decidir cual de los dos modelos predice mejor.
 
 En primer lugar, calculamos el error de las nuevas predicciones: real vs prediccion
 
@@ -1201,7 +1223,7 @@ ERRORvsERROR2 <- data.frame(Fecha,ERROR1, ERROR2)
 View(ERRORvsERROR2)
 ```
 
-Ploteamos para compararlos mejor:
+Ploteamos ambos Errores en la misma grafica para compararlos mejor:
 ```{r}
 ggplot() +  geom_line(data = ERRORvsERROR2 , aes(x = Fecha, y = ERROR1, color = 'ERROR1')) + 
   geom_line(data = ERRORvsERROR2, aes(x = Fecha, y = ERROR2 , color = 'ERROR2')) +
@@ -1212,5 +1234,5 @@ ggplot() +  geom_line(data = ERRORvsERROR2 , aes(x = Fecha, y = ERROR1, color = 
   
 ```
 
-Segun podemos observar, el nuevo modelo predictivo predice mejor porque la grafica apenas se desvia del 0, mientras el modelo predictivo inicial tiene algunos picos del 15% o del 8% de error.
+Segun podemos observar, el nuevo modelo predictivo predice mejor porque la grafica apenas se desvia del 0, mientras el modelo predictivo inicial tiene algunos picos del 15% o del 8% de error, vemos que claramente el Error1 es peor que el Error2.
 
