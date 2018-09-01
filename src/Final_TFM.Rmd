@@ -507,7 +507,7 @@ ggplot() +
 ```
 
 
-Al añadir una nueva componente de tendencia se mejora el MAPE, pasa del 86% al 53%. No obstante, las predicciones siguen lejos de la potencia consumida.
+Al añadir una nueva componente de tendencia se mejora el MAPE, pasa del 72% al 56%. No obstante, las predicciones siguen lejos de la potencia consumida.
 
 Podemos concluir que las predicciones no son de buena calidad.
 
