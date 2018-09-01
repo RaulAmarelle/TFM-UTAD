@@ -322,7 +322,7 @@ pairs(~KWH+CCDD20+CHDD18+AFLUENCIA,data=df.data, main="Scatterplot Matrix")
 ```
 
 Aunque hay bastante dispersion en los datos, en primer lugar destaca una fuerte dependencia entre Consumo vs Afluencia.
-Tambien llama la atencion la relacion entre Consumo y CCDD20 (Refrigeracion). Esto es coherente, cuanta mayor diferencia de temperatura con el exterior, mayor consumo. Ya vimos anteriormente que en los meses de verano hay mucho más consumo.
+Tambien llama la atencion la relacion entre Consumo y CCDD20 (Refrigeracion). Esto es coherente, cuanta mayor diferencia de temperatura con el exterior, mayor consumo. Ya vimos anteriormente que en los meses de verano hay mucho mas consumo.
 En cambio, en modo Calefaccion (CHDD18), al ser una linea plana significa que para el mismo consumo hay dias de poca diferencia de temperatura y otros dias con mayor gradiente termico.
 
 
@@ -349,7 +349,7 @@ Para conseguirlo vamos a definir nuestro plan:
 4. Comparar el error entre su modelo predictivo y nuestra mejor propuesta.  
 5. Comprobar cual de las dos opciones es mejor.
 
-La dificultad de analizar esta serie viene dada porque esta compuesta por muestras diarias en un ciclo estacional de dos años. Al tener justo el ciclo de dos años, se observa claramente una estacionalidad anual. Pero por otro lado, tampoco es una serie de amplio rango lo suficientemente larga (ej. diez años) ni tampoco en periodos mas cortos se observa una estacionalidad aparente (semana, mes).
+La dificultad de analizar esta serie viene dada porque esta compuesta por muestras diarias en un ciclo estacional de dos años. Al tener justo el ciclo de dos años, se observa claramente una estacionalidad anual. Por un lado, tampoco es una serie de amplio rango lo suficientemente larga (ej. diez años). Por otro, la estacionalidad para periodos mas cortos no resulta evidente.
 
 
 ## CASO 1: Impacto causal utilizando modelos bayesianos de series de tiempo
@@ -364,9 +364,9 @@ plot(ST_Error, xlab= "Periodo", ylab="% Error")
 
 ```
 
-Como podemos ver en el plot anterior, la evolucion de la variable ERROR no es estacional. Como primera aproximacion, podemos observar que el modelo de prediccion ha mejorado a partir de la segunda mitad de 2017, ya que el % Error es mucho menor, tiende a concentrarse en la horquilla de -10% a +10%.
+Como primera aproximacion, podemos observar que el modelo de prediccion ha mejorado a partir de la segunda mitad de 2017, ya que el % Error es mucho menor, tiende a concentrarse en la horquilla de -10% a +10%.
 
-Vamos a suponer que a partir de la medicion 426, coincidiendo con el 01/05/2017, se han introducido mejoras en el algoritmo de prediccion y vamos a comparar la mejora aplicando Causal Impact.
+Vamos a suponer que a partir de la medicion 426, coincidiendo con el 01/05/2017, se han introducido mejoras en el algoritmo de prediccion y vamos a comparar la mejora que ha supuesto aplicando Causal Impact.
 
 ```{r}
 pre_period <- c(1, 425)
@@ -388,7 +388,7 @@ summary(impact, "report")
 El resultado del analisis nos dice que la intervencion en el modelo redujo la prevision de ERROR en un 87%.
 
 
-Ahora vamos a probar personalizando el modelo con bsts.model
+Ahora vamos a calcular la prediccion utilizando un modelo personalizado con bsts.model
 
 ```{r} 
 ss <- AddLocalLevel(list(), df.data$KWH)
@@ -444,12 +444,16 @@ predictions.bsts.1$Estimated.BSTS1 = numeric.pred.bsts.1
 ggplot() +
   geom_line(data = predictions.bsts.1, aes(x = index, y = Real, color = 'Real')) + 
   geom_line(data = predictions.bsts.1, aes(x = index, y = Estimated.BSTS1 , color = 'Estimated.BSTS1')) +
-  scale_colour_manual('', breaks = c('Real', 'Estimated.BSTS1'), values = c('red', 'blue'))
+  scale_colour_manual('', breaks = c('Real', 'Estimated.BSTS1'), values = c('red', 'blue')) +
+  labs(y = "Potencia KWH") +
+  ggtitle ('Opcion 1: Estacionalidad por semanas') + 
+  theme(plot.title = element_text(hjust = 0.5))
 
 ```
 
 El resultado de la prevision queda el valor estimado muy por debajo del real.
-
+  
+  
 Opcion 2. Tantos periodos como meses del anio y le incluimos MonthlyAnnualCycle
 
 ```{r}
@@ -495,12 +499,15 @@ predictions.bsts.2$Estimated.BSTS1 = numeric.pred.bsts.2
 ggplot() +
   geom_line(data = predictions.bsts.2, aes(x = index, y = Real, color = 'Real')) + 
   geom_line(data = predictions.bsts.2, aes(x = index, y = Estimated.BSTS1, color = 'Estimated.BSTS1')) +
-  scale_colour_manual('', breaks = c('Real', 'Estimated.BSTS1'), values = c('red', 'blue'))
+  scale_colour_manual('', breaks = c('Real', 'Estimated.BSTS1'), values = c('red', 'blue')) +
+  labs(y = "Potencia KWH") +
+  ggtitle ('Opcion 2: Estacionalidad por meses') + 
+  theme(plot.title = element_text(hjust = 0.5))
 
 ```
 
 
-Al añadir una nueva componente de tendencia se mejora ligeramente el MAPE. No obstante, las predicciones siguen lejos del real.
+Al añadir una nueva componente de tendencia se mejora el MAPE, pasa del 86% al 53%. No obstante, las predicciones siguen lejos de la potencia consumida.
 
 Podemos concluir que las predicciones no son de buena calidad.
 
