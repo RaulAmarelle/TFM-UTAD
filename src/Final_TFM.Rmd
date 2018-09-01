@@ -255,7 +255,7 @@ aggregate(formula = AFLUENCIA ~ MONTH, data = df.data, FUN = mean)
 
 df.data$WEEKDAY <-  factor(df.data$WEEKDAY,c('lunes','martes','miércoles','jueves','viernes','sábado','domingo'))
 
-ggplot(df.data, aes(WEEKDAY, AFLUENCIA)) + geom_boxplot() +
+ggplot(df.data, aes(WEEKDAY, AFLUENCIA, fill=WEEKDAY)) + geom_boxplot() +
   labs(x = "Dia de la semana",y = "Personas") + 
   ggtitle ('Afluencia segun dia de la semana') + 
   theme(plot.title = element_text(hjust = 0.5))
@@ -268,7 +268,7 @@ Sorprendentemente, los dias de mayor asistencia son miercoles y jueves. Esperaba
 
 df.data$MONTH <-  factor(df.data$MONTH, c('1','2','3','4','5','6','7','8','9','10','11','12'))
 
-ggplot(df.data, aes(MONTH, AFLUENCIA)) + geom_boxplot() +
+ggplot(df.data, aes(MONTH, AFLUENCIA, fill=MONTH)) + geom_boxplot() +
   labs(x = "Mes",y = "Personas") + 
   ggtitle ('Afluencia por mes') + 
   theme(plot.title = element_text(hjust = 0.5))
@@ -291,7 +291,7 @@ aggregate(formula = KWH ~ MONTH, data = df.data, FUN = mean)
 ```{r}
 # Valores de potencia con boxplot y ordenados por dia de la semana
 
-ggplot(df.data, aes(WEEKDAY, KWH)) + geom_boxplot() +
+ggplot(df.data, aes(WEEKDAY, KWH, fill=WEEKDAY)) + geom_boxplot() +
   labs(x = "Dia de la semana",y = "KWH") + 
   ggtitle ('Consumo Potencia segun dia de la semana') + 
   theme(plot.title = element_text(hjust = 0.5))
@@ -302,7 +302,7 @@ Hay un contraste entre el dia de la semana que mas consumo hay (viernes) con el 
 ```{r}
 # Analizamos la potencia consumida por meses del año
 
-ggplot(df.data, aes(MONTH, KWH)) + geom_boxplot() +
+ggplot(df.data, aes(MONTH, KWH, fill=MONTH)) + geom_boxplot() +
   labs(x = "Mes",y = "KWH") + 
   ggtitle ('Consumo Potencia segun el mes') + 
   theme(plot.title = element_text(hjust = 0.5))
